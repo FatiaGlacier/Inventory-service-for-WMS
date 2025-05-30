@@ -1,7 +1,12 @@
 package com.fatia.inventoryservice.inverntoryrepositories;
 
-import com.fatia.inventoryservice.inventoryentities.SKU;
+import com.fatia.inventoryservice.inventoryentities.SKUEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SKURepository extends JpaRepository<SKU, Long> {
+import java.util.Optional;
+
+public interface SKURepository extends JpaRepository<SKUEntity, Long> {
+    Optional<SKUEntity> getSKUEntityByCode(String code);
+
+    int countByCode(String code);
 }

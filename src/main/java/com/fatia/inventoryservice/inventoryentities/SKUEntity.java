@@ -17,10 +17,16 @@ import java.util.Map;
 @Getter
 @Setter
 @ToString
-public class SKU { // Storage keeping unit
+public class SKUEntity { // Storage keeping unit
     @Id
     @GeneratedValue
     private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String code;
+
+    @Column(nullable = false)
+    private String batch;
 
     @Column(nullable = false)
     private String name;
@@ -41,7 +47,6 @@ public class SKU { // Storage keeping unit
 
     private Integer quantity;
 
-    @Column(nullable = false)
     private Long shelfId;
 
     @Column(nullable = false)

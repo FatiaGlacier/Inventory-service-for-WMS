@@ -7,16 +7,32 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "shelfs")
+@Table(name = "shelves")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
 @ToString
-public class Shelf {
+public class ShelfEntity {
 
     @Id
     @GeneratedValue
     private Long id;
+
+    private String number;
+
+    private Long nodeZoneId;
+
+    private int xOffset;
+
+    private int yOffset;
+
+    private int width;
+
+    private int height;
+
+    private int length;
+
+    private boolean isOccupied;
 }

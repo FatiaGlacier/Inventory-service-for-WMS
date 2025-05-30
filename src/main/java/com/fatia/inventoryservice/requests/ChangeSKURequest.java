@@ -1,15 +1,23 @@
 package com.fatia.inventoryservice.requests;
 
-import com.fatia.inventoryservice.inventoryentities.SKUStatus;
+import lombok.*;
 
 import java.util.Map;
 
-public class UpdateSKURequest {
+@Data
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ChangeSKURequest {
+    private Long id;
+
     private String name;
 
-    private String description;
+    private String code;
 
-    private SKUStatus status;
+    private String description;
 
     private int length;
 
@@ -18,8 +26,6 @@ public class UpdateSKURequest {
     private int height;
 
     private Integer quantity;
-
-    private Long shelfId;
 
     private Map<String, String> storageConditions;
 }

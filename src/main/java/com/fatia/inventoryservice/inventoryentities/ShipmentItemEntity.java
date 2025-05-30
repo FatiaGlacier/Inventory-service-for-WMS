@@ -11,7 +11,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class ShipmentItem {
+public class ShipmentItemEntity {
 
     @Id
     @GeneratedValue
@@ -22,14 +22,14 @@ public class ShipmentItem {
             optional = false
     )
     @JoinColumn(name = "shipment_batch_id")
-    private ShipmentBatch shipmentBatch;
+    private ShipmentBatchEntity shipmentBatch;
 
     @ManyToOne(
             fetch = FetchType.EAGER,
             optional = false
     )
     @JoinColumn(name = "sku_id")
-    private SKU storageKeepingUnit;
+    private SKUEntity storageKeepingUnit;
 
     @Column(nullable = false)
     private Long quantity;

@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class ShipmentBatch {
+public class ShipmentBatchEntity {
 
     @Id
     @GeneratedValue
@@ -28,12 +28,11 @@ public class ShipmentBatch {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<ShipmentItem> items;
+    private List<ShipmentItemEntity> items;
 
     @Column(nullable = false)
     private String trackingNumber;
 
-    @Column(nullable = false)
     private Long shelfId;
 
     @Column(nullable = false)
