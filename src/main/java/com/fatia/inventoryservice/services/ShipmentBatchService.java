@@ -9,6 +9,7 @@ import com.fatia.inventoryservice.inverntoryrepositories.ShipmentBatchRepository
 import com.fatia.inventoryservice.models.ShipmentBatchModel;
 import com.fatia.inventoryservice.requests.AddShipmentBatchRequest;
 import com.fatia.inventoryservice.requests.ChangeShipmentBatchRequest;
+import com.fatia.inventoryservice.requests.ChangeShipmentStatusRequest;
 import com.fatia.inventoryservice.requests.ShipmentItemRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,8 @@ public class ShipmentBatchService {
         entity.setItems(items);
         shipmentBatchRepository.saveAndFlush(entity);
 
+        //TODO add function to send action to log service
+
         return ShipmentBatchModel.toModel(entity);
     }
 
@@ -91,8 +94,15 @@ public class ShipmentBatchService {
             throw new RuntimeException("ShipmentBatch with id " + request.getId() + " not found");
         }
 
-        //Creating map of new items
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
+
+        if (batchEntity.getStatus() == ShipmentStatus.PICKING
+                || batchEntity.getStatus() == ShipmentStatus.DELIVERED
+                || batchEntity.getStatus() == ShipmentStatus.SHIPPED) {
+            throw new RuntimeException("ShipmentBatch with id " + request.getId() + " has status " + batchEntity.getStatus());
+        }
+
+        //Creating map of new items
         Map<Long, ShipmentItemRequest> newItemMap = new HashMap<>();
         for (ShipmentItemRequest item : request.getItems()) {
             newItemMap.put(item.getSkuId(), item);
@@ -136,6 +146,56 @@ public class ShipmentBatchService {
             skuService.reduceQuantity(skuEntity.getId(), newItem.getQuantity());
         }
 
+        //TODO add function to send action to log service
+
         shipmentBatchRepository.saveAndFlush(batchEntity);
+    }
+
+    public void changeStatus(ChangeShipmentStatusRequest request) {
+        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(request.getId());
+        if (optionalShipmentBatchEntity.isEmpty()) {
+            throw new RuntimeException("ShipmentBatch with id " + request.getId() + " not found");
+        }
+
+        if (!isValidShipmentStatus(request.getStatus())) {
+            throw new RuntimeException("Status " + request.getStatus() + " is not valid ");
+        }
+
+        ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
+        batchEntity.setStatus(ShipmentStatus.valueOf(request.getStatus()));
+
+        //TODO add function to send action to log service
+    }
+
+    public void deleteShipmentBatch(Long id) {
+        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(id);
+        if (optionalShipmentBatchEntity.isEmpty()) {
+            throw new RuntimeException("ShipmentBatch with id " + id + " not found");
+        }
+
+        ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
+
+        //TODO returning SKUs if status picking/delivered
+        //Maybe separate function from vehicle/warehouse service which changes count on warehouse from commands from vehicle when it arrives to the place
+
+        //Temporary variant
+        if (batchEntity.getStatus() == ShipmentStatus.CREATED
+                || batchEntity.getStatus() == ShipmentStatus.UPDATED) {
+            for (ShipmentItemEntity item : batchEntity.getItems()) {
+                skuService.increaseQuantity(item.getSku().getId(), item.getQuantity());
+            }
+        }
+
+        //TODO add function to save deleted object
+
+        //TODO add function to send action to log service
+
+        shipmentBatchRepository.delete(batchEntity);
+
+    }
+
+    private boolean isValidShipmentStatus(String name) {
+        return Arrays.stream(ShipmentStatus.values()).noneMatch(
+                status -> status.name().equals(name));
     }
 }

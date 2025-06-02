@@ -3,6 +3,7 @@ package com.fatia.inventoryservice.controllers;
 import com.fatia.inventoryservice.models.ShipmentBatchModel;
 import com.fatia.inventoryservice.requests.AddShipmentBatchRequest;
 import com.fatia.inventoryservice.requests.ChangeShipmentBatchRequest;
+import com.fatia.inventoryservice.requests.ChangeShipmentStatusRequest;
 import com.fatia.inventoryservice.services.SKUService;
 import com.fatia.inventoryservice.services.ShipmentBatchService;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,6 @@ public class ShipmentBatchController {
         return ResponseEntity.ok(shipmentBatchService.addShipmentBatch(request));
     }
 
-    //TODO change-shipment-batch
     @PutMapping("/change-shipment-batch")
     public ResponseEntity<ShipmentBatchModel> changeShipmentBatch(
             @RequestBody ChangeShipmentBatchRequest request
@@ -48,11 +48,23 @@ public class ShipmentBatchController {
         return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(request.getId()));
     }
 
-    //TODO change-status
+    @PatchMapping("/change-status")
+    public ResponseEntity<ShipmentBatchModel> changeStatus(
+            @RequestBody ChangeShipmentStatusRequest request
+    ) {
+        shipmentBatchService.changeStatus(request);
+        return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(request.getId()));
+    }
+    
+    @DeleteMapping("/delete-shipment-batch/{id}")
+    public ResponseEntity<String> deleteShipmentBatch(
+            @RequestParam Long id
+    ) {
+        shipmentBatchService.deleteShipmentBatch(id);
+        return ResponseEntity.ok("Deleted shipment batch with id " + id);
+    }
 
-    //TODO set-shelf???
-
-    //TODO delete-batch
+    //TODO set-shelf
 
     //TODO exceptions
 }

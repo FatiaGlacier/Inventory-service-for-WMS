@@ -3,6 +3,7 @@ package com.fatia.inventoryservice.services;
 import com.fatia.inventoryservice.inventoryentities.SKUEntity;
 import com.fatia.inventoryservice.inventoryentities.SKUStatus;
 import com.fatia.inventoryservice.inverntoryrepositories.SKURepository;
+import com.fatia.inventoryservice.inverntoryrepositories.ShipmentItemRepository;
 import com.fatia.inventoryservice.models.SKUModel;
 import com.fatia.inventoryservice.requests.AddSKURequest;
 import com.fatia.inventoryservice.requests.ChangeSKURequest;
@@ -23,6 +24,8 @@ public class SKUService {
 
     private final SKURepository skuRepository;
 
+    private final ShipmentItemRepository shipmentItemRepository;
+
     public SKUModel getSKUById(Long id) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
@@ -35,7 +38,7 @@ public class SKUService {
     public SKUModel getSKUByCode(String code) {
         Optional<SKUEntity> skuEntity = skuRepository.getSKUEntityByCode(code);
         if (skuEntity.isEmpty()) {
-            return null; //TODO exception
+            throw new RuntimeException("SKU not found by code: " + code);
         }
 
         return SKUModel.toModel(skuEntity.get());
@@ -84,6 +87,8 @@ public class SKUService {
 
         skuRepository.save(entity);
 
+        //TODO add function to send action to log service
+
         return SKUModel.toModel(entity);
     }
 
@@ -98,6 +103,70 @@ public class SKUService {
         return title + "-" + shortInfo + "-" + content;
     }
 
+    public void changeSKU(ChangeSKURequest request) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(request.getId());
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + request.getId());//TODO exception
+        }
+
+        SKUEntity entity = skuEntity.get();
+        entity.setName(request.getName());
+        entity.setCode(request.getCode());
+        entity.setDescription(request.getDescription());
+        entity.setLength(request.getLength());
+        entity.setWidth(request.getWidth());
+        entity.setHeight(request.getHeight());
+        entity.setQuantity(request.getQuantity());
+        entity.setStorageConditions(request.getStorageConditions());
+
+        skuRepository.saveAndFlush(entity);
+
+        //TODO add function to send action to log service
+    }
+
+    public void deleteSKUById(Long id) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + id);
+        }
+
+        if (shipmentItemRepository.isSkuUsedInShipment(id)) {
+            throw new RuntimeException("SKU is used by another shipment");
+        }
+
+        skuRepository.deleteById(id);
+
+        //TODO add function to send action to log service
+    }
+
+    public void increaseQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+        entity.setQuantity(entity.getQuantity() + quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    public void reduceQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+        if (entity.getQuantity() < quantity) {
+            throw new RuntimeException("Quantity exceeds the entity quantity");
+        }
+        entity.setQuantity(entity.getQuantity() - quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    //For generating SKU code
     private String extractQuotedName(String name) {
         Pattern pattern = Pattern.compile("\"([^\"]+)\"");
         Matcher matcher = pattern.matcher(name);
@@ -134,60 +203,5 @@ public class SKUService {
             return matcher.group(2); // e.g., 0.25x9
         }
         return "CNT";
-    }
-
-    public void changeSKU(ChangeSKURequest request) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(request.getId());
-        if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + request.getId());//TODO exception
-        }
-
-        SKUEntity entity = skuEntity.get();
-        entity.setName(request.getName());
-        entity.setCode(request.getCode());
-        entity.setDescription(request.getDescription());
-        entity.setLength(request.getLength());
-        entity.setWidth(request.getWidth());
-        entity.setHeight(request.getHeight());
-        entity.setQuantity(request.getQuantity());
-        entity.setStorageConditions(request.getStorageConditions());
-
-        skuRepository.saveAndFlush(entity);
-    }
-
-    public void deleteSKUById(Long id) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
-        if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);//TODO exception
-        }
-
-        skuRepository.deleteById(id);
-    }
-
-    public void increaseQuantity(Long id, Integer quantity) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
-        if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);
-        }
-
-        SKUEntity entity = skuEntity.get();
-        entity.setQuantity(entity.getQuantity() + quantity);
-
-        skuRepository.saveAndFlush(entity);
-    }
-
-    public void reduceQuantity(Long id, Integer quantity) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
-        if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);
-        }
-
-        SKUEntity entity = skuEntity.get();
-        if (entity.getQuantity() < quantity) {
-            throw new RuntimeException("Quantity exceeds the entity quantity");
-        }
-        entity.setQuantity(entity.getQuantity() - quantity);
-
-        skuRepository.saveAndFlush(entity);
     }
 }
