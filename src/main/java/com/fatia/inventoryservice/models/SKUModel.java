@@ -2,14 +2,15 @@ package com.fatia.inventoryservice.models;
 
 import com.fatia.inventoryservice.inventoryentities.SKUEntity;
 import com.fatia.inventoryservice.inventoryentities.SKUStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
-@Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

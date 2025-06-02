@@ -57,7 +57,11 @@ public class SKUController {
         skuService.deleteSKUById(id);
         return ResponseEntity.ok().build();
     }
+    
+    //TODO find SKU on shelf by shelf id
 
     //TODO add set-shelf
+
+    //TODO change-status
 
 }

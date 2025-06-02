@@ -29,8 +29,8 @@ public class ShipmentItemEntity {
             optional = false
     )
     @JoinColumn(name = "sku_id")
-    private SKUEntity storageKeepingUnit;
+    private SKUEntity sku;// storage keeping unit
 
     @Column(nullable = false)
-    private Long quantity;
+    private Integer quantity;
 }

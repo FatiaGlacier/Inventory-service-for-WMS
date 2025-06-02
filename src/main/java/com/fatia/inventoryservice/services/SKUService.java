@@ -163,4 +163,31 @@ public class SKUService {
 
         skuRepository.deleteById(id);
     }
+
+    public void increaseQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+        entity.setQuantity(entity.getQuantity() + quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    public void reduceQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new RuntimeException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+        if (entity.getQuantity() < quantity) {
+            throw new RuntimeException("Quantity exceeds the entity quantity");
+        }
+        entity.setQuantity(entity.getQuantity() - quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
 }

@@ -3,14 +3,15 @@ package com.fatia.inventoryservice.models;
 import com.fatia.inventoryservice.inventoryentities.ShipmentBatchEntity;
 import com.fatia.inventoryservice.inventoryentities.ShipmentItemEntity;
 import com.fatia.inventoryservice.inventoryentities.ShipmentStatus;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Getter
-@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,7 +21,7 @@ public class ShipmentBatchModel {
 
     private ShipmentStatus status;
 
-    private List<ShipmentItemEntity> items;
+    private List<ShipmentItemModel> items;
 
     private String trackingNumber;
 
@@ -35,15 +36,22 @@ public class ShipmentBatchModel {
     private LocalDateTime deliveredAt;
 
     public static ShipmentBatchModel toModel(ShipmentBatchEntity shipmentBatchEntity) {
-        return ShipmentBatchModel.builder()
-                .id(shipmentBatchEntity.getId())
-                .status(shipmentBatchEntity.getStatus())
-                .items(shipmentBatchEntity.getItems())
-                .shelfId(shipmentBatchEntity.getShelfId())
-                .destinationPoint(shipmentBatchEntity.getDestinationPoint())
-                .createdAt(shipmentBatchEntity.getCreatedAt())
-                .updatedAt(shipmentBatchEntity.getUpdatedAt())
-                .deliveredAt(shipmentBatchEntity.getDeliveredAt())
-                .build();
+
+        ShipmentBatchModel model = new ShipmentBatchModel();
+        model.setId(shipmentBatchEntity.getId());
+        model.setStatus(shipmentBatchEntity.getStatus());
+        model.setTrackingNumber(shipmentBatchEntity.getTrackingNumber());
+        model.setCreatedAt(shipmentBatchEntity.getCreatedAt());
+        model.setUpdatedAt(shipmentBatchEntity.getUpdatedAt());
+        model.setDeliveredAt(shipmentBatchEntity.getDeliveredAt());
+        model.setShelfId(shipmentBatchEntity.getShelfId());
+        model.setDestinationPoint(shipmentBatchEntity.getDestinationPoint());
+
+        for (ShipmentItemEntity item : shipmentBatchEntity.getItems()) {
+            model.getItems().add(ShipmentItemModel.toModel(item));
+        }
+
+        return model;
+
     }
 }
