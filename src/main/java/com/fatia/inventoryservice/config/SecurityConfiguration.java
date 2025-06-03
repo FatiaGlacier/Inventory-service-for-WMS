@@ -23,7 +23,37 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth ->
-                        auth.anyRequest().permitAll()//auth.anyRequest().authenticated()
+                        auth
+                                .requestMatchers(
+                                        "/api/v1/storage-keeping-unit/get-all",
+                                        "/api/v1/storage-keeping-unit/get-sku/{id}",
+                                        "/api/v1/shipment-batch/get-all",
+                                        "/api/v1/shipment-batch/get-shipment-batch/{id}"
+                                ).hasRole("ADMIN")
+                                .requestMatchers(
+                                        "/api/v1/storage-keeping-unit/get-all",
+                                        "/api/v1/storage-keeping-unit/get-sku/{id}",
+                                        "/api/v1/shipment-batch/get-all",
+                                        "/api/v1/shipment-batch/get-shipment-batch/{id}"
+                                ).hasRole("MANAGER")
+                                .requestMatchers(
+                                        "/api/v1/storage-keeping-unit/get-all",
+                                        "/api/v1/storage-keeping-unit/get-sku/{id}",
+                                        "/api/v1/storage-keeping-unit/add-sku",
+                                        "/api/v1/storage-keeping-unit/change-sku",
+                                        "/api/v1/storage-keeping-unit/delete-sku/{id}",
+                                        "/api/v1/storage-keeping-unit/change-status",
+                                        "/api/v1/shipment-batch/get-all",
+                                        "/api/v1/shipment-batch/get-shipment-batch/{id}",
+                                        "/api/v1/shipment-batch/add-shipment-batch",
+                                        "/api/v1/shipment-batch/change-shipment-batch",
+                                        "/api/v1/shipment-batch/change-status",
+                                        "/api/v1/shipment-batch/delete-shipment-batch/{id}"
+                                ).hasRole("WORKER")
+                                .requestMatchers(
+                                        "/api/v1/storage-keeping-unit/generate-code"
+                                ).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

@@ -19,7 +19,7 @@ public class SKUController {
 
     private final SKUService skuService;
 
-    @GetMapping("/get-all-skus")
+    @GetMapping("/get-all")
     public ResponseEntity<List<SKUModel>> getAllSKUs() {
         return ResponseEntity.ok(skuService.getAllSKUs());
     }
@@ -45,7 +45,7 @@ public class SKUController {
         return ResponseEntity.ok(skuService.generateSKUCode(request));
     }
 
-    @PutMapping("/change-sku/id")
+    @PutMapping("/change-sku")
     public ResponseEntity<SKUModel> changeSKU(
             @RequestBody ChangeSKURequest request
     ) {
