@@ -1,5 +1,9 @@
 package com.fatia.inventoryservice.services;
 
+import com.fatia.inventoryservice.exceptions.InsufficientQuantityException;
+import com.fatia.inventoryservice.exceptions.InvalidStatusException;
+import com.fatia.inventoryservice.exceptions.NotFoundException;
+import com.fatia.inventoryservice.exceptions.SKUInUseException;
 import com.fatia.inventoryservice.inventoryentities.SKUEntity;
 import com.fatia.inventoryservice.inventoryentities.SKUStatus;
 import com.fatia.inventoryservice.inverntoryrepositories.SKURepository;
@@ -31,7 +35,7 @@ public class SKUService {
     public SKUModel getSKUById(Long id) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);//TODO exception
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         return SKUModel.toModel(skuEntity.get());
@@ -40,7 +44,7 @@ public class SKUService {
     public SKUModel getSKUByCode(String code) {
         Optional<SKUEntity> skuEntity = skuRepository.getSKUEntityByCode(code);
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by code: " + code);
+            throw new NotFoundException("SKU not found by code: " + code);
         }
 
         return SKUModel.toModel(skuEntity.get());
@@ -108,7 +112,7 @@ public class SKUService {
     public void changeSKU(ChangeSKURequest request) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(request.getId());
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + request.getId());//TODO exception
+            throw new NotFoundException("SKU not found by ID: " + request.getId());//TODO exception
         }
 
         SKUEntity entity = skuEntity.get();
@@ -129,11 +133,11 @@ public class SKUService {
     public void deleteSKUById(Long id) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         if (shipmentItemRepository.isSkuUsedInShipment(id)) {
-            throw new RuntimeException("SKU is used by another shipment");
+            throw new SKUInUseException("SKU is used by another shipment");
         }
 
         skuRepository.deleteById(id);
@@ -144,7 +148,7 @@ public class SKUService {
     public void increaseQuantity(Long id, Integer quantity) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         SKUEntity entity = skuEntity.get();
@@ -156,12 +160,12 @@ public class SKUService {
     public void reduceQuantity(Long id, Integer quantity) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
-            throw new RuntimeException("SKU not found by ID: " + id);
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         SKUEntity entity = skuEntity.get();
         if (entity.getQuantity() < quantity) {
-            throw new RuntimeException("Quantity exceeds the entity quantity");
+            throw new InsufficientQuantityException("Quantity exceeds the entity quantity");
         }
         entity.setQuantity(entity.getQuantity() - quantity);
 
@@ -171,11 +175,11 @@ public class SKUService {
     public void changeStatus(ChangeSKUStatusRequest request) {
         Optional<SKUEntity> optionalSKUEntity = skuRepository.findById(request.getId());
         if (optionalSKUEntity.isEmpty()) {
-            throw new RuntimeException("SKU with id " + request.getId() + " not found");
+            throw new NotFoundException("SKU not found by ID: " + request.getId());
         }
 
         if (!isValidSKUStatus(request.getStatus())) {
-            throw new RuntimeException("Status " + request.getStatus() + " is not valid ");
+            throw new InvalidStatusException("Status " + request.getStatus() + " is not valid ");
         }
 
         SKUEntity skuEntity = optionalSKUEntity.get();

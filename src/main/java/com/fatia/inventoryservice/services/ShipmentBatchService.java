@@ -1,5 +1,8 @@
 package com.fatia.inventoryservice.services;
 
+import com.fatia.inventoryservice.exceptions.HasStatusException;
+import com.fatia.inventoryservice.exceptions.InvalidStatusException;
+import com.fatia.inventoryservice.exceptions.NotFoundException;
 import com.fatia.inventoryservice.inventoryentities.SKUEntity;
 import com.fatia.inventoryservice.inventoryentities.ShipmentBatchEntity;
 import com.fatia.inventoryservice.inventoryentities.ShipmentItemEntity;
@@ -43,7 +46,7 @@ public class ShipmentBatchService {
     public ShipmentBatchModel getShipmentBatchById(Long id) {
         Optional<ShipmentBatchEntity> entity = shipmentBatchRepository.findById(id);
         if (entity.isEmpty()) {
-            throw new RuntimeException("ShipmentBatch with id " + id + " not found");
+            throw new NotFoundException("ShipmentBatch not found by ID: " + id);
         }
 
         return ShipmentBatchModel.toModel(entity.get());
@@ -69,7 +72,7 @@ public class ShipmentBatchService {
         for (ShipmentItemRequest item : request.getItems()) {
             SKUEntity skuEntity = skuRepository
                     .findById(item.getSkuId())
-                    .orElseThrow(() -> new RuntimeException("SKU with id " + item.getSkuId() + " not found"));
+                    .orElseThrow(() -> new NotFoundException("SKU not found with id " + item.getSkuId()));
 
             ShipmentItemEntity itemEntity = new ShipmentItemEntity();
             itemEntity.setShipmentBatch(entity);
@@ -91,7 +94,7 @@ public class ShipmentBatchService {
     public void changeShipmentBatch(ChangeShipmentBatchRequest request) {
         Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(request.getId());
         if (optionalShipmentBatchEntity.isEmpty()) {
-            throw new RuntimeException("ShipmentBatch with id " + request.getId() + " not found");
+            throw new NotFoundException("ShipmentBatch not found with id " + request.getId());
         }
 
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
@@ -99,7 +102,7 @@ public class ShipmentBatchService {
         if (batchEntity.getStatus() == ShipmentStatus.PICKING
                 || batchEntity.getStatus() == ShipmentStatus.DELIVERED
                 || batchEntity.getStatus() == ShipmentStatus.SHIPPED) {
-            throw new RuntimeException("ShipmentBatch with id " + request.getId() + " has status " + batchEntity.getStatus());
+            throw new HasStatusException("ShipmentBatch with id " + request.getId() + " has status " + batchEntity.getStatus());
         }
 
         //Creating map of new items
@@ -135,7 +138,7 @@ public class ShipmentBatchService {
         for (ShipmentItemRequest newItem : newItemMap.values()) {
             SKUEntity skuEntity = skuRepository
                     .findById(newItem.getSkuId())
-                    .orElseThrow(() -> new RuntimeException("SKU with id " + newItem.getSkuId() + " not found"));
+                    .orElseThrow(() -> new NotFoundException("SKU not found with id " + newItem.getSkuId()));
 
             ShipmentItemEntity itemEntity = new ShipmentItemEntity();
             itemEntity.setShipmentBatch(batchEntity);
@@ -154,11 +157,11 @@ public class ShipmentBatchService {
     public void changeStatus(ChangeShipmentStatusRequest request) {
         Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(request.getId());
         if (optionalShipmentBatchEntity.isEmpty()) {
-            throw new RuntimeException("ShipmentBatch with id " + request.getId() + " not found");
+            throw new NotFoundException("ShipmentBatch not found with id " + request.getId());
         }
 
         if (!isValidShipmentStatus(request.getStatus())) {
-            throw new RuntimeException("Status " + request.getStatus() + " is not valid ");
+            throw new InvalidStatusException("Status " + request.getStatus() + " is not valid ");
         }
 
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
@@ -170,7 +173,7 @@ public class ShipmentBatchService {
     public void deleteShipmentBatch(Long id) {
         Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(id);
         if (optionalShipmentBatchEntity.isEmpty()) {
-            throw new RuntimeException("ShipmentBatch with id " + id + " not found");
+            throw new NotFoundException("ShipmentBatch with id " + id + " not found");
         }
 
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
