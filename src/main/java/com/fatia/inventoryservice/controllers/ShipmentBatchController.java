@@ -55,7 +55,7 @@ public class ShipmentBatchController {
         shipmentBatchService.changeStatus(request);
         return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(request.getId()));
     }
-    
+
     @DeleteMapping("/delete-shipment-batch/{id}")
     public ResponseEntity<String> deleteShipmentBatch(
             @RequestParam Long id
@@ -65,6 +65,4 @@ public class ShipmentBatchController {
     }
 
     //TODO set-shelf
-
-    //TODO exceptions
 }
