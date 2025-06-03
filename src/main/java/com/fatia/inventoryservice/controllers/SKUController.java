@@ -3,6 +3,7 @@ package com.fatia.inventoryservice.controllers;
 import com.fatia.inventoryservice.models.SKUModel;
 import com.fatia.inventoryservice.requests.AddSKURequest;
 import com.fatia.inventoryservice.requests.ChangeSKURequest;
+import com.fatia.inventoryservice.requests.ChangeSKUStatusRequest;
 import com.fatia.inventoryservice.requests.GenerateSKUCodeRequest;
 import com.fatia.inventoryservice.services.SKUService;
 import lombok.RequiredArgsConstructor;
@@ -57,11 +58,19 @@ public class SKUController {
         skuService.deleteSKUById(id);
         return ResponseEntity.ok().build();
     }
-    
+
+    //TODO change-status
+    @PatchMapping("/change-status")
+    public ResponseEntity<SKUModel> changeStatus(
+            @RequestBody ChangeSKUStatusRequest request
+    ) {
+        skuService.changeStatus(request);
+        return ResponseEntity.ok(skuService.getSKUById(request.getId()));
+    }
+
+
     //TODO find SKU on shelf by shelf id
 
     //TODO add set-shelf
-
-    //TODO change-status
 
 }

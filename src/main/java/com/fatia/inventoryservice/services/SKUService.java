@@ -7,12 +7,14 @@ import com.fatia.inventoryservice.inverntoryrepositories.ShipmentItemRepository;
 import com.fatia.inventoryservice.models.SKUModel;
 import com.fatia.inventoryservice.requests.AddSKURequest;
 import com.fatia.inventoryservice.requests.ChangeSKURequest;
+import com.fatia.inventoryservice.requests.ChangeSKUStatusRequest;
 import com.fatia.inventoryservice.requests.GenerateSKUCodeRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -166,6 +168,22 @@ public class SKUService {
         skuRepository.saveAndFlush(entity);
     }
 
+    public void changeStatus(ChangeSKUStatusRequest request) {
+        Optional<SKUEntity> optionalSKUEntity = skuRepository.findById(request.getId());
+        if (optionalSKUEntity.isEmpty()) {
+            throw new RuntimeException("SKU with id " + request.getId() + " not found");
+        }
+
+        if (!isValidSKUStatus(request.getStatus())) {
+            throw new RuntimeException("Status " + request.getStatus() + " is not valid ");
+        }
+
+        SKUEntity skuEntity = optionalSKUEntity.get();
+        skuEntity.setStatus(SKUStatus.valueOf(request.getStatus()));
+
+        //TODO add function to send action to log service
+    }
+
     //For generating SKU code
     private String extractQuotedName(String name) {
         Pattern pattern = Pattern.compile("\"([^\"]+)\"");
@@ -203,5 +221,11 @@ public class SKUService {
             return matcher.group(2); // e.g., 0.25x9
         }
         return "CNT";
+    }
+
+    //Status validation
+    private boolean isValidSKUStatus(String name) {
+        return Arrays.stream(SKUStatus.values()).noneMatch(
+                status -> status.name().equals(name));
     }
 }

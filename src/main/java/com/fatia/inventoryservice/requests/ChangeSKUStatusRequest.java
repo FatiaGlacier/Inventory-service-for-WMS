@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ChangeShipmentStatusRequest {
+public class ChangeSKUStatusRequest {
     Long id;
     String status;
 }
