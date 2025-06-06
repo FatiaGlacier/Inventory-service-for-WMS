@@ -1,10 +1,12 @@
 package com.fatia.inventoryservice.warehouseentities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
+
+import java.util.Map;
 
 @Entity
 @Table(name = "shelves")
@@ -20,19 +22,13 @@ public class ShelfEntity {
     @GeneratedValue
     private Long id;
 
-    private String number;
+    private String name;
 
-    private Long nodeZoneId;
-
-    private int xOffset;
-
-    private int yOffset;
-
-    private int width;
-
-    private int height;
-
-    private int length;
+    @Type(io.hypersistence.utils.hibernate.type.json.JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(
+            columnDefinition = "jsonb")
+    private Map<String, String> conditions;
 
     private boolean isOccupied;
 }
