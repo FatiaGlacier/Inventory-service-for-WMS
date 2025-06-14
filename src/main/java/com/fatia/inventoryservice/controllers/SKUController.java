@@ -45,12 +45,13 @@ public class SKUController {
         return ResponseEntity.ok(skuService.generateSKUCode(request));
     }
 
-    @PutMapping("/change-sku")
+    @PutMapping("/change-sku/{id}")
     public ResponseEntity<SKUModel> changeSKU(
+            @PathVariable Long id,
             @RequestBody ChangeSKURequest request
     ) {
-        skuService.changeSKU(request);
-        return ResponseEntity.ok(skuService.getSKUById(request.getId()));
+        skuService.changeSKU(id, request);
+        return ResponseEntity.ok(skuService.getSKUById(id));
     }
 
     @DeleteMapping("/delete-sku/{id}")
@@ -59,18 +60,30 @@ public class SKUController {
         return ResponseEntity.ok().build();
     }
 
-    //TODO change-status
-    @PatchMapping("/change-status")
+    @PatchMapping("/change-status/{id}")
     public ResponseEntity<SKUModel> changeStatus(
+            @PathVariable Long id,
             @RequestBody ChangeSKUStatusRequest request
     ) {
-        skuService.changeStatus(request);
-        return ResponseEntity.ok(skuService.getSKUById(request.getId()));
+        skuService.changeStatus(id, request);
+        return ResponseEntity.ok(skuService.getSKUById(id));
     }
 
-
-    //TODO find SKU on shelf by shelf id
+    @GetMapping("/get-sku-on-shelf/{shelfId}")
+    public ResponseEntity<SKUModel> getSKUOnShelf(
+            @PathVariable Long shelfId
+    ) {
+        return ResponseEntity.ok(skuService.getSKUOnShelf(shelfId));
+    }
 
     //TODO add set-shelf
+    @PatchMapping("/set-shelf/{skuId}/{shelfId}")
+    public ResponseEntity<SKUModel> setShelf(
+            @PathVariable Long skuId,
+            @PathVariable Long shelfId
+    ) {
+        skuService.setShelf(skuId, shelfId);
+        return ResponseEntity.ok(skuService.getSKUById(skuId));
+    }
 
 }

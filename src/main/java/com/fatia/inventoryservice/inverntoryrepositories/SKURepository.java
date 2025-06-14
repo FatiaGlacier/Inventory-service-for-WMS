@@ -9,4 +9,6 @@ public interface SKURepository extends JpaRepository<SKUEntity, Long> {
     Optional<SKUEntity> getSKUEntityByCode(String code);
 
     int countByCode(String code);
+
+    Optional<SKUEntity> findSKUEntityByShelfId(Long shelfId);
 }

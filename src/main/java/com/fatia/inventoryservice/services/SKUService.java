@@ -13,6 +13,8 @@ import com.fatia.inventoryservice.requests.AddSKURequest;
 import com.fatia.inventoryservice.requests.ChangeSKURequest;
 import com.fatia.inventoryservice.requests.ChangeSKUStatusRequest;
 import com.fatia.inventoryservice.requests.GenerateSKUCodeRequest;
+import com.fatia.inventoryservice.warehouseentities.ShelfEntity;
+import com.fatia.inventoryservice.warehouserepositories.ShelfRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +33,53 @@ public class SKUService {
     private final SKURepository skuRepository;
 
     private final ShipmentItemRepository shipmentItemRepository;
+
+    private final ShelfRepository shelfRepository;
+
+    //For generating SKU code
+    private String extractQuotedName(String name) {
+        Pattern pattern = Pattern.compile("\"([^\"]+)\"");
+        Matcher matcher = pattern.matcher(name);
+        if (matcher.find()) {
+            String quoted = matcher.group(1);
+            return quoted.replaceAll("(?i)[aeiou]", "").toUpperCase();
+        }
+        return "NONAME";
+    }
+
+    private String generateShortInfoBlock(String name) {
+        // Remove quoted part
+        String unquoted = name.replaceAll("\"([^\"]+)\"", "");
+        // Remove content part after indicator (like "pack", "box")
+        String mainPart = unquoted.replaceAll("\\b(pack|box|item|container)\\b.*", "");
+        String[] words = mainPart.trim().split("\\s+");
+
+        List<String> processed = new ArrayList<>();
+        for (String word : words) {
+            word = word.replaceAll("[^a-zA-Z]", "").toLowerCase();
+            if (!word.isEmpty()) {
+                String noVowels = word.replaceAll("[aeiou]", "");
+                processed.add(noVowels.toUpperCase());
+            }
+        }
+
+        return String.join("_", processed);
+    }
+
+    private String extractContentAfterIndicator(String name) {
+        Pattern pattern = Pattern.compile("\\b(pack|box|item|container)\\b\\s*(\\S+)");
+        Matcher matcher = pattern.matcher(name.toLowerCase());
+        if (matcher.find()) {
+            return matcher.group(2); // e.g., 0.25x9
+        }
+        return "CNT";
+    }
+
+    //Status validation
+    private boolean isValidSKUStatus(String name) {
+        return Arrays.stream(SKUStatus.values()).noneMatch(
+                status -> status.name().equals(name));
+    }
 
     public SKUModel getSKUById(Long id) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
@@ -89,8 +138,6 @@ public class SKUService {
         }
         entity.setBatch(batch);
 
-        //TODO set shelf
-
         skuRepository.save(entity);
 
         //TODO add function to send action to log service
@@ -109,10 +156,10 @@ public class SKUService {
         return title + "-" + shortInfo + "-" + content;
     }
 
-    public void changeSKU(ChangeSKURequest request) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(request.getId());
+    public void changeSKU(Long id, ChangeSKURequest request) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
-            throw new NotFoundException("SKU not found by ID: " + request.getId());//TODO exception
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         SKUEntity entity = skuEntity.get();
@@ -172,10 +219,10 @@ public class SKUService {
         skuRepository.saveAndFlush(entity);
     }
 
-    public void changeStatus(ChangeSKUStatusRequest request) {
-        Optional<SKUEntity> optionalSKUEntity = skuRepository.findById(request.getId());
+    public void changeStatus(Long id, ChangeSKUStatusRequest request) {
+        Optional<SKUEntity> optionalSKUEntity = skuRepository.findById(id);
         if (optionalSKUEntity.isEmpty()) {
-            throw new NotFoundException("SKU not found by ID: " + request.getId());
+            throw new NotFoundException("SKU not found by ID: " + id);
         }
 
         if (!isValidSKUStatus(request.getStatus())) {
@@ -188,48 +235,37 @@ public class SKUService {
         //TODO add function to send action to log service
     }
 
-    //For generating SKU code
-    private String extractQuotedName(String name) {
-        Pattern pattern = Pattern.compile("\"([^\"]+)\"");
-        Matcher matcher = pattern.matcher(name);
-        if (matcher.find()) {
-            String quoted = matcher.group(1);
-            return quoted.replaceAll("(?i)[aeiou]", "").toUpperCase();
-        }
-        return "NONAME";
-    }
-
-    private String generateShortInfoBlock(String name) {
-        // Remove quoted part
-        String unquoted = name.replaceAll("\"([^\"]+)\"", "");
-        // Remove content part after indicator (like "pack", "box")
-        String mainPart = unquoted.replaceAll("\\b(pack|box|item|container)\\b.*", "");
-        String[] words = mainPart.trim().split("\\s+");
-
-        List<String> processed = new ArrayList<>();
-        for (String word : words) {
-            word = word.replaceAll("[^a-zA-Z]", "").toLowerCase();
-            if (!word.isEmpty()) {
-                String noVowels = word.replaceAll("[aeiou]", "");
-                processed.add(noVowels.toUpperCase());
-            }
+    public SKUModel getSKUOnShelf(Long shelfId) {
+        Optional<ShelfEntity> optionalShelfEntity = shelfRepository.findById(shelfId);
+        if (optionalShelfEntity.isEmpty()) {
+            throw new NotFoundException("Shelf not found by ID: " + shelfId);
         }
 
-        return String.join("_", processed);
-    }
-
-    private String extractContentAfterIndicator(String name) {
-        Pattern pattern = Pattern.compile("\\b(pack|box|item|container)\\b\\s*(\\S+)");
-        Matcher matcher = pattern.matcher(name.toLowerCase());
-        if (matcher.find()) {
-            return matcher.group(2); // e.g., 0.25x9
+        Optional<SKUEntity> optionalSKUEntity = skuRepository.findSKUEntityByShelfId(shelfId);
+        if (optionalSKUEntity.isEmpty()) {
+            throw new NotFoundException("SKU not found on shelf with ID: " + shelfId);
         }
-        return "CNT";
+
+        SKUEntity skuEntity = optionalSKUEntity.get();
+        return SKUModel.toModel(skuEntity);
     }
 
-    //Status validation
-    private boolean isValidSKUStatus(String name) {
-        return Arrays.stream(SKUStatus.values()).noneMatch(
-                status -> status.name().equals(name));
+    public void setShelf(Long skuId, Long shelfId) {
+        Optional<ShelfEntity> optionalShelfEntity = shelfRepository.findById(shelfId);
+        if (optionalShelfEntity.isEmpty()) {
+            throw new NotFoundException("Shelf not found by ID: " + shelfId);
+        }
+
+        Optional<SKUEntity> optionalSKUEntity = skuRepository.findById(skuId);
+        if (optionalSKUEntity.isEmpty()) {
+            throw new NotFoundException("SKU not found with ID: " + skuId);
+        }
+
+        SKUEntity skuEntity = optionalSKUEntity.get();
+        skuEntity.setShelfId(shelfId);
+
+        //TODO request for updateing shelf data in warehouse service
+
+        skuRepository.saveAndFlush(skuEntity);
     }
 }

@@ -12,7 +12,6 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChangeSKURequest {
-    private Long id;
 
     private String name;
 
