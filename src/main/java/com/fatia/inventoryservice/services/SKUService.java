@@ -81,6 +81,76 @@ public class SKUService {
                 status -> status.name().equals(name));
     }
 
+    //For working with batches
+    public void increaseReservedQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new NotFoundException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+
+        if (entity.getAvailableQuantity() < quantity) {
+            throw new InsufficientQuantityException("Quantity exceeds the entity available quantity");
+        }
+
+        if (entity.getTotalQuantity() < quantity) {
+            throw new InsufficientQuantityException("Quantity exceeds the entity total quantity");
+        }
+
+        entity.setAvailableQuantity(entity.getAvailableQuantity() - quantity);
+        entity.setReservedQuantity(entity.getReservedQuantity() + quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    public void reduceReservedQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new NotFoundException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+
+        if (entity.getReservedQuantity() < quantity) {
+            throw new InsufficientQuantityException("Quantity exceeds the entity reserved quantity");
+        }
+
+        if (entity.getTotalQuantity() < quantity) {
+            throw new InsufficientQuantityException("Quantity exceeds the entity total quantity");
+        }
+
+        entity.setAvailableQuantity(entity.getAvailableQuantity() + quantity);
+        entity.setReservedQuantity(entity.getReservedQuantity() - quantity);
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    public void reduceTotalQuantity(Long id, Integer quantity) {
+        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
+        if (skuEntity.isEmpty()) {
+            throw new NotFoundException("SKU not found by ID: " + id);
+        }
+
+        SKUEntity entity = skuEntity.get();
+
+        Integer totalQuantity = entity.getTotalQuantity();
+
+        if (totalQuantity < quantity) {
+            throw new InsufficientQuantityException("Quantity exceeds the entity total quantity");
+        }
+
+        Integer newQuantity = totalQuantity - quantity;
+
+        entity.setTotalQuantity(newQuantity);
+        if (newQuantity == 0) {
+            // TODO update shelf as non occupied
+        }
+
+        skuRepository.saveAndFlush(entity);
+    }
+
+    //Rest API functions
     public SKUModel getSKUById(Long id) {
         Optional<SKUEntity> skuEntity = skuRepository.findById(id);
         if (skuEntity.isEmpty()) {
@@ -120,7 +190,10 @@ public class SKUService {
                 .length(request.getLength())
                 .width(request.getWidth())
                 .height(request.getHeight())
-                .quantity(request.getQuantity())
+                .weight(request.getWeight())
+                .totalQuantity(request.getQuantity())
+                .reservedQuantity(0)
+                .availableQuantity(request.getQuantity())
                 .storageConditions(request.getStorageConditions())
                 .build();
 
@@ -169,7 +242,23 @@ public class SKUService {
         entity.setLength(request.getLength());
         entity.setWidth(request.getWidth());
         entity.setHeight(request.getHeight());
-        entity.setQuantity(request.getQuantity());
+
+        Integer oldTotalQuantity = entity.getTotalQuantity();
+        Integer newTotalQuantity = request.getTotalQuantity();
+        Integer diff = oldTotalQuantity - newTotalQuantity;
+
+        if (newTotalQuantity < entity.getReservedQuantity()) {
+            throw new RuntimeException("New total quantity is less than reserved quantity");
+        }
+
+        if (diff != 0) {
+            entity.setTotalQuantity(newTotalQuantity);
+
+            Integer availableQuantity = entity.getAvailableQuantity();
+            entity.setAvailableQuantity(availableQuantity - diff);
+        }
+
+        entity.setWeight(request.getWeight());
         entity.setStorageConditions(request.getStorageConditions());
 
         skuRepository.saveAndFlush(entity);
@@ -189,34 +278,9 @@ public class SKUService {
 
         skuRepository.deleteById(id);
 
+        //TODO request for updating shelf data in warehouse service
+
         //TODO add function to send action to log service
-    }
-
-    public void increaseQuantity(Long id, Integer quantity) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
-        if (skuEntity.isEmpty()) {
-            throw new NotFoundException("SKU not found by ID: " + id);
-        }
-
-        SKUEntity entity = skuEntity.get();
-        entity.setQuantity(entity.getQuantity() + quantity);
-
-        skuRepository.saveAndFlush(entity);
-    }
-
-    public void reduceQuantity(Long id, Integer quantity) {
-        Optional<SKUEntity> skuEntity = skuRepository.findById(id);
-        if (skuEntity.isEmpty()) {
-            throw new NotFoundException("SKU not found by ID: " + id);
-        }
-
-        SKUEntity entity = skuEntity.get();
-        if (entity.getQuantity() < quantity) {
-            throw new InsufficientQuantityException("Quantity exceeds the entity quantity");
-        }
-        entity.setQuantity(entity.getQuantity() - quantity);
-
-        skuRepository.saveAndFlush(entity);
     }
 
     public void changeStatus(Long id, ChangeSKUStatusRequest request) {
@@ -264,7 +328,7 @@ public class SKUService {
         SKUEntity skuEntity = optionalSKUEntity.get();
         skuEntity.setShelfId(shelfId);
 
-        //TODO request for updateing shelf data in warehouse service
+        //TODO request for updating shelf data in warehouse service
 
         skuRepository.saveAndFlush(skuEntity);
     }

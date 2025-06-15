@@ -24,6 +24,8 @@ public class AddSKURequest {
 
     private int height;
 
+    private int weight;
+
     private Integer quantity;
 
     private Map<String, String> storageConditions;

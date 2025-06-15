@@ -85,5 +85,4 @@ public class SKUController {
         skuService.setShelf(skuId, shelfId);
         return ResponseEntity.ok(skuService.getSKUById(skuId));
     }
-
 }

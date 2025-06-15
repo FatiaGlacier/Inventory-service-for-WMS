@@ -45,7 +45,13 @@ public class SKUEntity { // Storage keeping unit
     @Column(nullable = false)
     private int height;
 
-    private Integer quantity;
+    private Integer weight; // for one unit
+
+    private Integer totalQuantity;
+
+    private Integer reservedQuantity;
+
+    private Integer availableQuantity;
 
     private Long shelfId;
 

@@ -40,20 +40,22 @@ public class ShipmentBatchController {
         return ResponseEntity.ok(shipmentBatchService.addShipmentBatch(request));
     }
 
-    @PutMapping("/change-shipment-batch")
+    @PutMapping("/change-shipment-batch/{id}")
     public ResponseEntity<ShipmentBatchModel> changeShipmentBatch(
+            @PathVariable Long id,
             @RequestBody ChangeShipmentBatchRequest request
     ) {
-        shipmentBatchService.changeShipmentBatch(request);
-        return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(request.getId()));
+        shipmentBatchService.changeShipmentBatch(id, request);
+        return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(id));
     }
 
-    @PatchMapping("/change-status")
+    @PatchMapping("/change-status/{id}")
     public ResponseEntity<ShipmentBatchModel> changeStatus(
+            @PathVariable Long id,
             @RequestBody ChangeShipmentStatusRequest request
     ) {
-        shipmentBatchService.changeStatus(request);
-        return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(request.getId()));
+        shipmentBatchService.changeStatus(id, request);
+        return ResponseEntity.ok(shipmentBatchService.getShipmentBatchById(id));
     }
 
     @DeleteMapping("/delete-shipment-batch/{id}")
@@ -63,6 +65,4 @@ public class ShipmentBatchController {
         shipmentBatchService.deleteShipmentBatch(id);
         return ResponseEntity.ok("Deleted shipment batch with id " + id);
     }
-
-    //TODO set-shelf
 }

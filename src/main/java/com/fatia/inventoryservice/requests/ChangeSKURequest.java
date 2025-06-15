@@ -25,7 +25,9 @@ public class ChangeSKURequest {
 
     private int height;
 
-    private Integer quantity;
+    private int weight;
+
+    private Integer totalQuantity;
 
     private Map<String, String> storageConditions;
 }

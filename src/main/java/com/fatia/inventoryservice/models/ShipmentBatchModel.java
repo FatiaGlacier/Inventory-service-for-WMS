@@ -23,6 +23,8 @@ public class ShipmentBatchModel {
 
     private List<ShipmentItemModel> items;
 
+    private Integer totalWeight;
+
     private String trackingNumber;
 
     private Long shelfId;
@@ -46,6 +48,7 @@ public class ShipmentBatchModel {
         model.setDeliveredAt(shipmentBatchEntity.getDeliveredAt());
         model.setShelfId(shipmentBatchEntity.getShelfId());
         model.setDestinationPoint(shipmentBatchEntity.getDestinationPoint());
+        model.setTotalWeight(shipmentBatchEntity.getTotalWeight());
 
         for (ShipmentItemEntity item : shipmentBatchEntity.getItems()) {
             model.getItems().add(ShipmentItemModel.toModel(item));

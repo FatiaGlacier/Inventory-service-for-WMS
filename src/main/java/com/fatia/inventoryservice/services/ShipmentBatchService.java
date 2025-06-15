@@ -80,7 +80,7 @@ public class ShipmentBatchService {
             itemEntity.setQuantity(item.getQuantity());
 
             items.add(itemEntity);
-            skuService.reduceQuantity(item.getSkuId(), item.getQuantity());
+            skuService.increaseReservedQuantity(item.getSkuId(), item.getQuantity());
         }
 
         entity.setItems(items);
@@ -91,10 +91,10 @@ public class ShipmentBatchService {
         return ShipmentBatchModel.toModel(entity);
     }
 
-    public void changeShipmentBatch(ChangeShipmentBatchRequest request) {
-        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(request.getId());
+    public void changeShipmentBatch(Long id, ChangeShipmentBatchRequest request) {
+        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(id);
         if (optionalShipmentBatchEntity.isEmpty()) {
-            throw new NotFoundException("ShipmentBatch not found with id " + request.getId());
+            throw new NotFoundException("ShipmentBatch not found with id " + id);
         }
 
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
@@ -102,7 +102,7 @@ public class ShipmentBatchService {
         if (batchEntity.getStatus() == ShipmentStatus.PICKING
                 || batchEntity.getStatus() == ShipmentStatus.DELIVERED
                 || batchEntity.getStatus() == ShipmentStatus.SHIPPED) {
-            throw new HasStatusException("ShipmentBatch with id " + request.getId() + " has status " + batchEntity.getStatus());
+            throw new HasStatusException("ShipmentBatch with id " + id + " has status " + batchEntity.getStatus());
         }
 
         //Creating map of new items
@@ -118,15 +118,15 @@ public class ShipmentBatchService {
             Long skuID = oldItem.getSku().getId();
             ShipmentItemRequest newItem = newItemMap.get(skuID);
             if (newItem == null) {
-                skuService.increaseQuantity(skuID, oldItem.getQuantity());
+                skuService.reduceReservedQuantity(skuID, oldItem.getQuantity());
                 iterator.remove();
             } else {
                 if (!Objects.equals(oldItem.getQuantity(), newItem.getQuantity())) {
                     int diff = newItem.getQuantity() - oldItem.getQuantity();
                     if (diff > 0) {
-                        skuService.reduceQuantity(skuID, diff);
+                        skuService.increaseReservedQuantity(skuID, diff);
                     } else {
-                        skuService.increaseQuantity(skuID, -diff);
+                        skuService.reduceReservedQuantity(skuID, -diff);
                     }
                     oldItem.setQuantity(newItem.getQuantity());
                 }
@@ -146,7 +146,7 @@ public class ShipmentBatchService {
             itemEntity.setQuantity(newItem.getQuantity());
 
             batchEntity.getItems().add(itemEntity);
-            skuService.reduceQuantity(skuEntity.getId(), newItem.getQuantity());
+            skuService.increaseReservedQuantity(skuEntity.getId(), newItem.getQuantity());
         }
 
         //TODO add function to send action to log service
@@ -154,10 +154,10 @@ public class ShipmentBatchService {
         shipmentBatchRepository.saveAndFlush(batchEntity);
     }
 
-    public void changeStatus(ChangeShipmentStatusRequest request) {
-        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(request.getId());
+    public void changeStatus(Long id, ChangeShipmentStatusRequest request) {
+        Optional<ShipmentBatchEntity> optionalShipmentBatchEntity = shipmentBatchRepository.findById(id);
         if (optionalShipmentBatchEntity.isEmpty()) {
-            throw new NotFoundException("ShipmentBatch not found with id " + request.getId());
+            throw new NotFoundException("ShipmentBatch not found with id " + id);
         }
 
         if (!isValidShipmentStatus(request.getStatus())) {
@@ -167,6 +167,13 @@ public class ShipmentBatchService {
         ShipmentBatchEntity batchEntity = optionalShipmentBatchEntity.get();
         batchEntity.setStatus(ShipmentStatus.valueOf(request.getStatus()));
 
+        shipmentBatchRepository.saveAndFlush(batchEntity);
+
+        if (request.getStatus().equals(ShipmentStatus.SHIPPED.name())) {
+            for (ShipmentItemEntity item : batchEntity.getItems()) {
+                skuService.reduceTotalQuantity(item.getSku().getId(), item.getQuantity());
+            }
+        }
         //TODO add function to send action to log service
     }
 
@@ -185,7 +192,7 @@ public class ShipmentBatchService {
         if (batchEntity.getStatus() == ShipmentStatus.CREATED
                 || batchEntity.getStatus() == ShipmentStatus.UPDATED) {
             for (ShipmentItemEntity item : batchEntity.getItems()) {
-                skuService.increaseQuantity(item.getSku().getId(), item.getQuantity());
+                skuService.reduceReservedQuantity(item.getSku().getId(), item.getQuantity());
             }
         }
 
@@ -194,7 +201,6 @@ public class ShipmentBatchService {
         //TODO add function to send action to log service
 
         shipmentBatchRepository.delete(batchEntity);
-
     }
 
     private boolean isValidShipmentStatus(String name) {

@@ -12,7 +12,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChangeShipmentBatchRequest {
-    Long id;
     private List<ShipmentItemRequest> items;
     private String destinationPoint;
 }

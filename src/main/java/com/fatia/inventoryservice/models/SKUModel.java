@@ -34,7 +34,13 @@ public class SKUModel {
 
     private int height;
 
-    private Integer quantity;
+    private Integer weight; // for one unit
+
+    private Integer totalQuantity;
+
+    private Integer reservedQuantity;
+
+    private Integer availableQuantity;
 
     private Long shelfId;
 
@@ -56,7 +62,10 @@ public class SKUModel {
                 .length(skuEntity.getLength())
                 .width(skuEntity.getWidth())
                 .height(skuEntity.getHeight())
-                .quantity(skuEntity.getQuantity())
+                .weight(skuEntity.getWeight())
+                .totalQuantity(skuEntity.getTotalQuantity())
+                .reservedQuantity(skuEntity.getReservedQuantity())
+                .availableQuantity(skuEntity.getAvailableQuantity())
                 .shelfId(skuEntity.getShelfId())
                 .createdAt(skuEntity.getCreatedAt())
                 .updatedAt(skuEntity.getUpdatedAt())

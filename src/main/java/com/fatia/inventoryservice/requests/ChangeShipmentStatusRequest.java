@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChangeShipmentStatusRequest {
-    Long id;
     String status;
 }

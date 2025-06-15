@@ -30,6 +30,8 @@ public class ShipmentBatchEntity {
     )
     private List<ShipmentItemEntity> items;
 
+    private Integer totalWeight;
+
     @Column(nullable = false)
     private String trackingNumber;
 
